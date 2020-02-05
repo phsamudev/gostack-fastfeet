@@ -85,6 +85,31 @@ class RecipientController {
       zip_code,
     });
   }
+
+  async index(req, res) {
+    const { page = 1 } = req.query;
+
+    if (page < 1) {
+      return res.status(401).json({ error: 'Invalid page number' });
+    }
+
+    const recipients = await Recipient.findAll({
+      limit: 20,
+      offset: (page - 1) * 20,
+      attributes: [
+        'id',
+        'name',
+        'street',
+        'number',
+        'complement',
+        'state',
+        'city',
+        'zip_code',
+      ],
+    });
+
+    return res.json(recipients);
+  }
 }
 
 export default new RecipientController();

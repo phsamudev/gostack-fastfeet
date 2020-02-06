@@ -56,9 +56,7 @@ class RecipientController {
       return res.status(400).json({ error: 'Validation fails' });
     }
 
-    const { id } = req.params;
-
-    const recipient = await Recipient.findByPk(id);
+    const recipient = await Recipient.findByPk(req.recipientId);
 
     if (!recipient) {
       return res.status(400).json({ error: 'Recipient not found' });
@@ -75,7 +73,7 @@ class RecipientController {
     } = await recipient.update(req.body);
 
     return res.json({
-      id,
+      id: req.recipientId,
       name,
       street,
       number,

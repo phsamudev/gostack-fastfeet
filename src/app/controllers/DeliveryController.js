@@ -5,6 +5,9 @@ import Recipient from '../models/Recipient';
 import Deliveryman from '../models/Deliveryman';
 import File from '../models/File';
 
+import DeliveryMail from '../jobs/DeliveryMail';
+import Queue from '../../lib/Queue';
+
 class DeliveryController {
   async store(req, res) {
     const schema = Yup.object().shape({
@@ -31,25 +34,59 @@ class DeliveryController {
       return res.status(400).json({ error: "Deliveryman doesn't exist" });
     }
 
-    const {
-      id,
-      signature_id,
-      product,
-      canceled_at,
-      start_date,
-      end_date,
-    } = await Delivery.create(req.body);
+    const { id } = await Delivery.create(req.body);
 
-    return res.json({
-      id,
-      recipient_id,
-      deliveryman_id,
-      signature_id,
-      product,
-      canceled_at,
-      start_date,
-      end_date,
+    const delivery = await Delivery.findByPk(id, {
+      attributes: [
+        'id',
+        'recipient_id',
+        'deliveryman_id',
+        'signature_id',
+        'product',
+        'canceled_at',
+        'start_date',
+        'end_date',
+      ],
+      include: [
+        {
+          model: File,
+          as: 'signature',
+          attributes: ['id', 'name', 'path', 'url'],
+        },
+        {
+          model: Recipient,
+          as: 'recipient',
+          attributes: [
+            'id',
+            'name',
+            'street',
+            'number',
+            'complement',
+            'state',
+            'city',
+            'zip_code',
+          ],
+        },
+        {
+          model: Deliveryman,
+          as: 'deliveryman',
+          attributes: ['id', 'name', 'email', 'avatar_id'],
+          include: [
+            {
+              model: File,
+              as: 'avatar',
+              attributes: ['id', 'name', 'path', 'url'],
+            },
+          ],
+        },
+      ],
     });
+
+    await Queue.add(DeliveryMail.key, {
+      delivery,
+    });
+
+    return res.json(delivery);
   }
 
   async index(req, res) {

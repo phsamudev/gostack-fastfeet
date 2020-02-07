@@ -1,11 +1,27 @@
+import { Op } from 'sequelize';
+
 import Delivery from '../models/Delivery';
 import File from '../models/File';
 import Recipient from '../models/Recipient';
 
 class DeliverymanDeliveryController {
   async index(req, res) {
+    const where = {
+      deliveryman_id: req.deliverymanId,
+      canceled_at: null,
+    };
+
+    if (req.query.delivered === 'true') {
+      where.end_date = { [Op.ne]: null };
+    } else {
+      where.end_date = null;
+    }
+
     if (req.deliveryId) {
-      const delivery = await Delivery.findByPk(req.deliveryId, {
+      where.id = req.deliveryId;
+
+      const delivery = await Delivery.findOne({
+        where,
         attributes: [
           'id',
           'recipient_id',
@@ -39,11 +55,18 @@ class DeliverymanDeliveryController {
         ],
       });
 
+      if (!delivery) {
+        return res
+          .status(404)
+          .json({ error: 'Delivery not found for this deliveryman' });
+      }
+
       return res.json(delivery);
     }
 
     const deliveries = await Delivery.findAll({
-      where: { deliveryman_id: req.deliverymanId },
+      order: [['created_at', 'DESC']],
+      where,
       attributes: [
         'id',
         'recipient_id',

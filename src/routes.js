@@ -8,12 +8,15 @@ import DeliverymanController from './app/controllers/DeliverymanController';
 import AvatarFileController from './app/controllers/AvatarFileController';
 import DeliveryController from './app/controllers/DeliveryController';
 import DeliverymanDeliveryController from './app/controllers/DeliverymanDeliveryController';
-// import DeliverymanDeliveredController from './app/controllers/DeliverymanDeliveredController';
+import StartDeliveryController from './app/controllers/StartDeliveryController';
+import FinishDeliveryController from './app/controllers/FinishDeliveryController';
 
 import authMiddleware from './app/middlewares/auth';
 import deliverymanExists from './app/middlewares/deliverymanExists';
 import deliveryExists from './app/middlewares/deliveryExists';
 import recipientExists from './app/middlewares/recipientExists';
+import canBeFinished from './app/middlewares/canBeFinished';
+import canBeStarted from './app/middlewares/canBeStarted';
 
 const routes = new Router();
 const upload = multer(multerConfig);
@@ -21,7 +24,7 @@ const upload = multer(multerConfig);
 routes.post('/sessions', SessionController.store);
 
 /**
- * Deliveries not delivered by a deliveryman
+ * Deliveries by a deliveryman
  */
 routes.get(
   '/deliverymen/:deliverymanId/deliveries',
@@ -36,14 +39,29 @@ routes.get(
 );
 
 /**
- * Deliveries delived by a deliveryman
+ * Start a delivery
  */
-// routes.get(
-//   '/deliverymen/:id/delivered',
-//   deliverymanExists,
-//   DeliverymanDeliveredController
-// );
+routes.put(
+  '/deliveries/:deliveryId/start',
+  deliveryExists,
+  canBeStarted,
+  StartDeliveryController.update
+);
 
+/**
+ * Finish a delivery
+ */
+routes.put(
+  '/deliveries/:deliveryId/finish',
+  deliveryExists,
+  canBeFinished,
+  upload.single('file'),
+  FinishDeliveryController.update
+);
+
+/**
+ * Admin authorization required
+ */
 routes.use(authMiddleware);
 
 /**

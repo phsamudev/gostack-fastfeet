@@ -10,6 +10,8 @@ import DeliveryController from './app/controllers/DeliveryController';
 import DeliverymanDeliveryController from './app/controllers/DeliverymanDeliveryController';
 import StartDeliveryController from './app/controllers/StartDeliveryController';
 import FinishDeliveryController from './app/controllers/FinishDeliveryController';
+import DeliveryProblemController from './app/controllers/DeliveryProblemController';
+import ProblemController from './app/controllers/ProblemController';
 
 import authMiddleware from './app/middlewares/auth';
 import deliverymanExists from './app/middlewares/deliverymanExists';
@@ -17,6 +19,7 @@ import deliveryExists from './app/middlewares/deliveryExists';
 import recipientExists from './app/middlewares/recipientExists';
 import canBeFinished from './app/middlewares/canBeFinished';
 import canBeStarted from './app/middlewares/canBeStarted';
+import problemExists from './app/middlewares/problemExists';
 
 const routes = new Router();
 const upload = multer(multerConfig);
@@ -57,6 +60,20 @@ routes.put(
   canBeFinished,
   upload.single('file'),
   FinishDeliveryController.update
+);
+
+/**
+ * Register and list problems of a delivery
+ */
+routes.post(
+  '/deliveries/:deliveryId/problems',
+  deliveryExists,
+  DeliveryProblemController.store
+);
+routes.get(
+  '/deliveries/:deliveryId/problems',
+  deliveryExists,
+  DeliveryProblemController.index
 );
 
 /**
@@ -116,6 +133,16 @@ routes.delete(
   '/deliveries/:deliveryId',
   deliveryExists,
   DeliveryController.delete
+);
+
+/**
+ * Problems
+ */
+routes.get('/problems', ProblemController.index);
+routes.delete(
+  '/problems/:problemId/cancel-delivery',
+  problemExists,
+  ProblemController.delete
 );
 
 export default routes;
